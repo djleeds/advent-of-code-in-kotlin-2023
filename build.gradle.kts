@@ -8,6 +8,10 @@ sourceSets {
     }
 }
 
+dependencies {
+    implementation("com.willowtreeapps.assertk:assertk:0.27.0")
+}
+
 tasks {
     wrapper {
         gradleVersion = "8.5"
