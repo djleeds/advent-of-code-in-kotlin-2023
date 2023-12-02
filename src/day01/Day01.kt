@@ -1,7 +1,12 @@
+package day01
+
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import println
+import readInput
 
 fun main() {
+
     fun part1(input: List<String>): Int {
         return input.sumOf { line ->
             val firstDigit = line.first { it.isDigit() }
@@ -33,10 +38,10 @@ fun main() {
         }
     }
 
-    val testInput = readInput("Day01_test")
+    val testInput = readInput("day01/Day01_test")
     assertThat(part2(testInput)).isEqualTo(281)
 
-    val input = readInput("Day01")
+    val input = readInput("day01/Day01")
     part1(input).println()
     assertThat(part1(input)).isEqualTo(55834)
 
