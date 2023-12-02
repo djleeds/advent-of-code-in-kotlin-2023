@@ -1,8 +1,6 @@
 package day02
 
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import readInput
+import solve
 
 data class Draw(val red: Int, val green: Int, val blue: Int) {
     fun isPossible(fullDraw: Draw) =
@@ -48,19 +46,9 @@ fun main() {
     fun part2(input: List<String>) =
         Game.parseMany(input).map { it.smallestFullDraw() }.sumOf { it.power }
 
-    val part1TestResult = part1(readInput("day02/test-input-1"))
-    println(part1TestResult)
-    assertThat(part1TestResult).isEqualTo(8)
+    solve(::part1, withInput = "day02/test", andAssert = 8)
+    solve(::part1, withInput = "day02/input", andAssert = 1867)
 
-    val part1Result = part1(readInput("day02/input"))
-    println(part1Result)
-    assertThat(part1Result).isEqualTo(1867)
-
-    val part2TestResult = part2(readInput("day02/test-input-1"))
-    println(part2TestResult)
-    assertThat(part2TestResult).isEqualTo(2286)
-
-    val part2Result = part2(readInput("day02/input"))
-    println(part2Result)
-    assertThat(part2Result).isEqualTo(84538)
+    solve(::part2, withInput = "day02/test", andAssert = 2286)
+    solve(::part2, withInput = "day02/input", andAssert = 84538)
 }

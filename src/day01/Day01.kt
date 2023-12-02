@@ -1,9 +1,6 @@
 package day01
 
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import println
-import readInput
+import solve
 
 fun main() {
 
@@ -38,13 +35,9 @@ fun main() {
         }
     }
 
-    val testInput = readInput("day01/Day01_test")
-    assertThat(part2(testInput)).isEqualTo(281)
+    solve(::part1, withInput = "day01/test1", andAssert = 142)
+    solve(::part1, withInput = "day01/input", andAssert = 55834)
 
-    val input = readInput("day01/Day01")
-    part1(input).println()
-    assertThat(part1(input)).isEqualTo(55834)
-
-    part2(input).println()
-    assertThat(part2(input)).isEqualTo(53221)
+    solve(::part2, withInput = "day01/test2", andAssert = 281)
+    solve(::part2, withInput = "day01/input", andAssert = 53221)
 }
