@@ -41,10 +41,14 @@ data class Game(val number: Int, val draws: List<Draw>) {
 
 fun main() {
     fun part1(input: List<String>) =
-        Game.parseMany(input).filter { it.isPossible(Draw(12, 13, 14)) }.sumOf { it.number }
+        Game.parseMany(input)
+            .filter { it.isPossible(Draw(12, 13, 14)) }
+            .sumOf { it.number }
 
     fun part2(input: List<String>) =
-        Game.parseMany(input).map { it.smallestFullDraw() }.sumOf { it.power }
+        Game.parseMany(input)
+            .map { it.smallestFullDraw() }
+            .sumOf { it.power }
 
     solve(::part1, withInput = "day02/test", andAssert = 8)
     solve(::part1, withInput = "day02/input", andAssert = 1867)
