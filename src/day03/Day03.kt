@@ -15,7 +15,9 @@ fun main() {
             .filter { it.symbol?.char == '*' }
             .groupBy { it.symbol }
             .filterValues { it.size == 2 }
-            .map { (_, partNumbers) -> partNumbers.first().number * partNumbers.last().number }
+            .map { (_, partNumbers) ->
+                partNumbers.first().number * partNumbers.last().number
+            }
             .sum()
 
     solve(::part1, withInput = "day03/test", andAssert = 4361)
