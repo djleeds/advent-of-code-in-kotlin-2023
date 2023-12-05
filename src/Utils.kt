@@ -22,7 +22,7 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  */
 fun Any?.println() = println(this)
 
-fun solve(puzzle: (List<String>) -> Int, withInput: String, andAssert: Int? = null) {
+fun <T : Number> solve(puzzle: (List<String>) -> T, withInput: String, andAssert: T? = null) {
     val input = readInput(withInput).dropLastWhile { it.isEmpty() }
     val result = puzzle(input)
     println(result)
