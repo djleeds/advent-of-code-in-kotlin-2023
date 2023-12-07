@@ -5,13 +5,19 @@ import lib.parser.result1
 import lib.parser.result2
 import solve
 
-enum class Card {
-    C2, C3, C4, C5, C6, C7, C8, C9, CT, CJ, CQ, CK, CA;
+object Rules {
+    var jokersWild = false
+}
 
-    val label: Char = name[1];
+enum class Card {
+    CW, C2, C3, C4, C5, C6, C7, C8, C9, CT, CJ, CQ, CK, CA;
+
+    val label: Char = name[1]
+    operator fun times(count: Int) = List(count) { this }
 
     companion object {
-        fun from(char: Char) = entries.first { it.label == char }
+        fun from(char: Char) =
+            entries.first { it.label == char }.takeUnless { Rules.jokersWild && it == CJ } ?: CW
     }
 }
 
@@ -28,50 +34,69 @@ enum class HandType(vararg sortedCardCount: Int) {
 
     companion object {
         fun from(handCardCount: List<Int>) =
-            entries.firstOrNull { it.sortedCardCounts == handCardCount }
-                ?: throw IllegalStateException("Input $handCardCount did not match any hand types.")
+            entries.first { it.sortedCardCounts == handCardCount }
     }
 }
 
-data class Hand(val cards: List<Card>) : Comparable<Hand> {
-    private val type = HandType.from(cards.groupBy { it }.mapValues { it.value.count() }.values.sortedDescending())
+fun List<Card>.wildsReplacedWith(card: Card) = map { if (it == Card.CW) card else it }
 
-    override fun compareTo(other: Hand): Int {
-        return when {
-            type < other.type -> -1
-            type > other.type -> 1
-            else              ->
-                cards
-                    .zip(other.cards)
-                    .firstOrNull { it.first != it.second }
-                    ?.let { it.first.compareTo(it.second) }
-                    ?: 0
+class Hand(private val cards: List<Card>) : Comparable<Hand> {
+    private val cardGroups: Map<Card, Int> = cards.groupBy { it }.mapValues { it.value.count() }
+    private val type: HandType = HandType.from(cardGroups.values.sortedDescending())
+    private val withWildsApplied: Hand
+        get() {
+            val bestCard = cardGroups.filter { it.key != Card.CW }.maxByOrNull { it.value }?.key ?: Card.CA
+            return Hand(cards.wildsReplacedWith(bestCard))
         }
+
+    override fun compareTo(other: Hand): Int =
+        compareTo(other) { if (Rules.jokersWild) it.withWildsApplied.type else it.type }
+
+    private fun compareTo(other: Hand, typeProvider: (Hand) -> HandType): Int = when {
+        typeProvider(this) < typeProvider(other) -> -1
+        typeProvider(this) > typeProvider(other) -> 1
+        else                                     -> compareBySecondOrderingRule(other)
     }
+
+    private fun compareBySecondOrderingRule(other: Hand): Int =
+        cards.zip(other.cards).firstOrNull { it.first != it.second }?.let { it.first.compareTo(it.second) } ?: 0
+
+    override fun toString() = String(cards.map { it.label }.toCharArray())
 }
 
 data class HandAndBid(val hand: Hand, val bid: Int) {
     companion object {
-        fun from(line: String) = line.parse<Hand, Int> {
-            split(" ") {
-                left.result1 { map(Card::from).let(::Hand) }
-                right.result2 { toInt() }
+        fun from(line: String): HandAndBid {
+            val (hand, bid) = line.parse<Hand, Int> {
+                split(" ") {
+                    left.result1 { map(Card::from).let(::Hand) }
+                    right.result2 { toInt() }
+                }
             }
-        }.let { (hand, bid) -> HandAndBid(hand, bid) }
+            return HandAndBid(hand, bid)
+        }
     }
 }
 
 fun main() {
-    fun part1(input: List<String>): Int = input
+    fun solve(input: List<String>): Int = input
         .map(HandAndBid::from)
         .sortedBy { it.hand }
         .foldIndexed(0) { index, acc, item -> acc + ((index + 1) * item.bid) }
 
-    fun part2(input: List<String>): Int = -1
+    fun part1(input: List<String>): Int {
+        Rules.jokersWild = false
+        return solve(input)
+    }
+
+    fun part2(input: List<String>): Int {
+        Rules.jokersWild = true
+        return solve(input)
+    }
 
     solve(::part1, withInput = "day07/test", andAssert = 6440)
-    solve(::part1, withInput = "day07/input", andAssert = null)
+    solve(::part1, withInput = "day07/input", andAssert = 250120186)
 
-    //solve(::part2, withInput = "day07/test", andAssert = null)
-    //solve(::part2, withInput = "day07/input", andAssert = null)
+    solve(::part2, withInput = "day07/test", andAssert = 5905)
+    solve(::part2, withInput = "day07/input", andAssert = 250665248)
 }
