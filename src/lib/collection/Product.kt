@@ -7,3 +7,11 @@ fun Iterable<Int>.product(): Int {
     }
     return result
 }
+
+fun Iterable<Long>.product(): Long {
+    var result = 1L
+    for (element in this) {
+        result *= element
+    }
+    return result
+}
