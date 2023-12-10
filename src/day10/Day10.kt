@@ -1,5 +1,6 @@
 package day10
 
+import day10.Direction.*
 import solve
 
 data class Position(val x: Int, val y: Int) {
@@ -7,15 +8,21 @@ data class Position(val x: Int, val y: Int) {
     val south get() = copy(y = y + 1)
     val west get() = copy(x = x - 1)
     val north get() = copy(y = y - 1)
+
     fun go(direction: Direction) = when (direction) {
-        Direction.NORTH -> north
-        Direction.SOUTH -> south
-        Direction.EAST  -> east
-        Direction.WEST  -> west
+        NORTH -> north
+        SOUTH -> south
+        EAST  -> east
+        WEST  -> west
     }
 }
 
-enum class Direction { NORTH, SOUTH, EAST, WEST }
+enum class Direction {
+    NORTH, EAST, SOUTH, WEST;
+
+    fun toRight() = entries[(ordinal + 1).rem(entries.size)]
+    fun toLeft() = entries[(ordinal + 3).rem(entries.size)]
+}
 
 val Char.connectsToEast get() = this in listOf('F', '-', 'L')
 val Char.connectsToSouth get() = this in listOf('F', '|', '7')
@@ -23,31 +30,31 @@ val Char.connectsToWest get() = this in listOf('J', '-', '7')
 val Char.connectsToNorth get() = this in listOf('J', '|', 'L')
 
 fun Char.nextDirection(lastDirection: Direction) = when (lastDirection) {
-    Direction.NORTH -> when (this) {
-        'F'  -> Direction.EAST
-        '|'  -> Direction.NORTH
-        '7'  -> Direction.WEST
+    NORTH -> when (this) {
+        'F'  -> EAST
+        '|'  -> NORTH
+        '7'  -> WEST
         else -> throw IllegalStateException()
     }
 
-    Direction.SOUTH -> when (this) {
-        'L'  -> Direction.EAST
-        '|'  -> Direction.SOUTH
-        'J'  -> Direction.WEST
+    SOUTH -> when (this) {
+        'L'  -> EAST
+        '|'  -> SOUTH
+        'J'  -> WEST
         else -> throw IllegalStateException()
     }
 
-    Direction.EAST  -> when (this) {
-        'J'  -> Direction.NORTH
-        '-'  -> Direction.EAST
-        '7'  -> Direction.SOUTH
+    EAST  -> when (this) {
+        'J'  -> NORTH
+        '-'  -> EAST
+        '7'  -> SOUTH
         else -> throw IllegalStateException()
     }
 
-    Direction.WEST  -> when (this) {
-        'F'  -> Direction.SOUTH
-        '-'  -> Direction.WEST
-        'L'  -> Direction.NORTH
+    WEST  -> when (this) {
+        'F'  -> SOUTH
+        '-'  -> WEST
+        'L'  -> NORTH
         else -> throw IllegalStateException()
     }
 }
@@ -64,10 +71,10 @@ fun main() {
         println("Start position = $position")
 
         val firstStepDirection = when {
-            input.at(position.east).connectsToWest   -> Direction.EAST
-            input.at(position.south).connectsToNorth -> Direction.SOUTH
-            input.at(position.west).connectsToEast   -> Direction.WEST
-            input.at(position.north).connectsToSouth -> Direction.NORTH
+            input.at(position.east).connectsToWest   -> EAST
+            input.at(position.south).connectsToNorth -> SOUTH
+            input.at(position.west).connectsToEast   -> WEST
+            input.at(position.north).connectsToSouth -> NORTH
             else                                     -> throw IllegalStateException()
         }
 
@@ -88,11 +95,89 @@ fun main() {
         return steps / 2
     }
 
-    fun part2(input: List<String>): Int = -1
+    fun part2(input: List<String>): Int {
+        val ewBounds = input[0].indices
+        val nsBounds = input.indices
 
-    solve(::part1, withInput = "day10/test", andAssert = 8)
-    solve(::part1, withInput = "day10/input", andAssert = null)
+        val loopPositions = mutableSetOf<Position>()
+        val rightSidePositions = mutableSetOf<Position>()
+        val leftSidePositions = mutableSetOf<Position>()
 
-    //solve(::part2, withInput = "day10/test", andAssert = null)
+        val y = input.indexOfFirst { it.contains('S') }
+        val x = input[y].indexOfFirst { it == 'S' }
+        val startPosition = Position(x, y)
+        var position = startPosition
+
+        println("Start position = $position")
+        loopPositions.add(position)
+
+        val firstStepDirection = when {
+            input.at(position.east).connectsToWest   -> EAST
+            input.at(position.south).connectsToNorth -> SOUTH
+            input.at(position.west).connectsToEast   -> WEST
+            input.at(position.north).connectsToSouth -> NORTH
+            else                                     -> throw IllegalStateException()
+        }
+
+        println("First step = $firstStepDirection")
+
+        position = position.go(firstStepDirection)
+        loopPositions.add(position)
+        var steps = 1
+        var lastStepDirection = firstStepDirection
+
+        while (input.at(position) != 'S') {
+            val currentTile = input.at(position)
+            println(currentTile)
+            lastStepDirection = currentTile.nextDirection(lastStepDirection)
+            position = position.go(lastStepDirection)
+            loopPositions.add(position)
+            steps++
+        }
+
+        println(loopPositions.count() / 2)
+
+        println(loopPositions)
+
+        // Traverse again, now that we have the loop charted, and fire rays off to the sides.
+        position = position.go(firstStepDirection)
+        lastStepDirection = firstStepDirection
+
+        while (input.at(position) != 'S') {
+            val currentTile = input.at(position)
+            val right = lastStepDirection.toRight()
+            var rayPosition = position.go(right)
+
+            println("is $rayPosition in loopPositions?")
+
+            while (rayPosition !in loopPositions) {
+                println("RIGHT RAY $rayPosition")
+                rightSidePositions.add(rayPosition)
+                rayPosition = rayPosition.go(right)
+            }
+
+            val left = lastStepDirection.toLeft()
+            rayPosition = position.go(left)
+
+            while (rayPosition !in loopPositions) {
+                println("LEFT RAY $rayPosition")
+                leftSidePositions.add(rayPosition)
+                rayPosition = rayPosition.go(right)
+            }
+
+            lastStepDirection = currentTile.nextDirection(lastStepDirection)
+            position = position.go(lastStepDirection)
+        }
+
+        println("Left Positions = $leftSidePositions")
+        println("Right Positions = $rightSidePositions")
+
+        return -1
+    }
+
+    //solve(::part1, withInput = "day10/test", andAssert = 8)
+    //solve(::part1, withInput = "day10/input", andAssert = 7107)
+
+    solve(::part2, withInput = "day10/test2", andAssert = null)
     //solve(::part2, withInput = "day10/input", andAssert = null)
 }
