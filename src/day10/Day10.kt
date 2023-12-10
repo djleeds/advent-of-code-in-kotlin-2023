@@ -24,73 +24,65 @@ enum class Direction {
     fun toLeft() = rotate(3)
     fun toBack() = rotate(2)
 
-    private fun rotate(increments: Int) = entries[(ordinal + increments).rem(entries.size)]
+    private fun rotate(ninetyDegreeIncrements: Int) =
+        entries[(ordinal + ninetyDegreeIncrements).rem(entries.size)]
 }
 
-data class Tile(val char: Char, val connections: Set<Direction>)
+enum class Tile(val char: Char, val connections: Set<Direction>) {
+    NORTH_AND_EAST('F', setOf(SOUTH, EAST)),
+    NORTH_AND_SOUTH('|', setOf(NORTH, SOUTH)),
+    NORTH_AND_WEST('7', setOf(SOUTH, WEST)),
+    SOUTH_AND_EAST('L', setOf(NORTH, EAST)),
+    SOUTH_AND_WEST('J', setOf(NORTH, WEST)),
+    EAST_AND_WEST('-', setOf(EAST, WEST)),
+    START('S', emptySet()),
+    EMPTY('.', emptySet());
 
-val Char.connectsToEast get() = this in listOf('F', '-', 'L')
-val Char.connectsToSouth get() = this in listOf('F', '|', '7')
-val Char.connectsToWest get() = this in listOf('J', '-', '7')
-val Char.connectsToNorth get() = this in listOf('J', '|', 'L')
+    fun nextDirection(lastDirection: Direction) = connections.first { it != lastDirection.toBack() }
 
-fun Char.nextDirection(lastDirection: Direction) = when (lastDirection) {
-    NORTH -> when (this) {
-        'F'  -> EAST
-        '|'  -> NORTH
-        '7'  -> WEST
-        else -> throw IllegalStateException()
-    }
+    override fun toString() = "$char"
 
-    SOUTH -> when (this) {
-        'L'  -> EAST
-        '|'  -> SOUTH
-        'J'  -> WEST
-        else -> throw IllegalStateException()
-    }
-
-    EAST  -> when (this) {
-        'J'  -> NORTH
-        '-'  -> EAST
-        '7'  -> SOUTH
-        else -> throw IllegalStateException()
-    }
-
-    WEST  -> when (this) {
-        'F'  -> SOUTH
-        '-'  -> WEST
-        'L'  -> NORTH
-        else -> throw IllegalStateException()
+    companion object {
+        fun from(char: Char) = entries.first { it.char == char }
     }
 }
 
-fun List<String>.at(position: Position) = at(position.x, position.y)
-fun List<String>.at(x: Int, y: Int) = this[y][x]
+class World(val map: List<List<Tile>>) {
+    val start: Position = run {
+        val y = map.indexOfFirst { it.contains(Tile.START) }
+        val x = map[y].indexOfFirst { it == Tile.START }
+        Position(x, y)
+    }
+
+    val firstStepDirection = when {
+        at(start.east).connections.contains(WEST)   -> EAST
+        at(start.south).connections.contains(NORTH) -> SOUTH
+        at(start.west).connections.contains(EAST)   -> WEST
+        at(start.north).connections.contains(SOUTH) -> NORTH
+        else                                        -> throw IllegalStateException()
+    }
+
+    fun at(position: Position) = map[position.y][position.x]
+
+    companion object {
+        fun from(input: List<String>) =
+            World(input.map { line -> line.map { char -> Tile.from(char) } })
+    }
+}
 
 fun main() {
     fun part1(input: List<String>): Int {
-        val y = input.indexOfFirst { it.contains('S') }
-        val x = input[y].indexOfFirst { it == 'S' }
-        var position = Position(x, y)
+        val world = World.from(input)
 
-        println("Start position = $position")
-
-        val firstStepDirection = when {
-            input.at(position.east).connectsToWest   -> EAST
-            input.at(position.south).connectsToNorth -> SOUTH
-            input.at(position.west).connectsToEast   -> WEST
-            input.at(position.north).connectsToSouth -> NORTH
-            else                                     -> throw IllegalStateException()
-        }
-
-        println("First step = $firstStepDirection")
+        var position = world.start
+        val firstStepDirection = world.firstStepDirection
 
         position = position.go(firstStepDirection)
         var steps = 1
         var lastStepDirection = firstStepDirection
 
-        while (input.at(position) != 'S') {
-            val currentTile = input.at(position)
+        while (world.at(position) != Tile.START) {
+            val currentTile = world.at(position)
             println(currentTile)
             lastStepDirection = currentTile.nextDirection(lastStepDirection)
             position = position.go(lastStepDirection)
@@ -101,6 +93,8 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
+        val world = World.from(input)
+
         val ewBounds = input[0].indices
         val nsBounds = input.indices
 
@@ -117,11 +111,11 @@ fun main() {
         loopPositions.add(position)
 
         val firstStepDirection = when {
-            input.at(position.east).connectsToWest   -> EAST
-            input.at(position.south).connectsToNorth -> SOUTH
-            input.at(position.west).connectsToEast   -> WEST
-            input.at(position.north).connectsToSouth -> NORTH
-            else                                     -> throw IllegalStateException()
+            world.at(position.east).connections.contains(WEST)   -> EAST
+            world.at(position.south).connections.contains(NORTH) -> SOUTH
+            world.at(position.west).connections.contains(EAST)   -> WEST
+            world.at(position.north).connections.contains(SOUTH) -> NORTH
+            else                                                 -> throw IllegalStateException()
         }
 
         println("First step = $firstStepDirection")
@@ -131,8 +125,8 @@ fun main() {
         var steps = 1
         var lastStepDirection = firstStepDirection
 
-        while (input.at(position) != 'S') {
-            val currentTile = input.at(position)
+        while (world.at(position) != Tile.START) {
+            val currentTile = world.at(position)
             println(currentTile)
             lastStepDirection = currentTile.nextDirection(lastStepDirection)
             position = position.go(lastStepDirection)
@@ -150,16 +144,12 @@ fun main() {
         position = position.go(firstStepDirection)
         lastStepDirection = firstStepDirection
 
-        while (input.at(position) != 'S') {
-            val currentTile = input.at(position)
+        while (world.at(position) != Tile.START) {
+            val currentTile = world.at(position)
             val nextStepDirection = currentTile.nextDirection(lastStepDirection)
 
             var right = lastStepDirection.toRight()
-            var rayPosition = position.go(right)
-
-            if (position.x == 15 && position.y == 1) {
-                println("HERE")
-            }
+            var rayPosition: Position
 
             rayPosition = position.go(right)
             while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
