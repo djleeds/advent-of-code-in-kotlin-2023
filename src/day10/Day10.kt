@@ -70,7 +70,7 @@ class World(val map: List<List<Tile>>) {
 
     fun at(position: Position) = map[position.y][position.x]
 
-    fun traversePipeLoop(): Sequence<Pair<Position, Tile>> = sequence {
+    fun traversePipeLoop(): Sequence<Triple<Position, Tile, Direction>> = sequence {
         var position = start
         var direction = firstStepDirection
         var tile: Tile
@@ -78,7 +78,7 @@ class World(val map: List<List<Tile>>) {
         do {
             position = position.go(direction)
             tile = at(position)
-            yield(position to tile)
+            yield(Triple(position, tile, direction))
             if (tile != Tile.START) direction = tile.nextDirection(direction)
         } while (tile != Tile.START)
     }
@@ -98,27 +98,15 @@ fun main() {
     fun part2(input: List<String>): Int {
         val world = World.from(input)
 
-        val loopPositions = mutableSetOf<Position>()
+        val loopPositions = world.traversePipeLoop().map { (position, _, _) -> position }.toSet()
         val rightSidePositions = mutableSetOf<Position>()
         val leftSidePositions = mutableSetOf<Position>()
 
         var position = world.start
-
-        loopPositions.add(position)
-
-        position = position.go(world.firstStepDirection)
-        loopPositions.add(position)
         var lastStepDirection = world.firstStepDirection
 
-        while (world.at(position) != Tile.START) {
-            val currentTile = world.at(position)
-            lastStepDirection = currentTile.nextDirection(lastStepDirection)
-            position = position.go(lastStepDirection)
-            loopPositions.add(position)
-        }
-
         // Traverse again, now that we have the loop charted, and fire rays off to the sides.
-        var outsideIsToTheLeft: Boolean? = null
+        var travelingClockwise: Boolean? = null
 
         position = position.go(world.firstStepDirection)
         lastStepDirection = world.firstStepDirection
@@ -134,7 +122,7 @@ fun main() {
             while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
-                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
+                if (!world.isInBounds(rayPosition)) travelingClockwise = false
             }
 
             right = nextStepDirection.toRight()
@@ -142,7 +130,7 @@ fun main() {
             while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
-                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
+                if (!world.isInBounds(rayPosition)) travelingClockwise = false
             }
 
             var left = lastStepDirection.toLeft()
@@ -150,7 +138,7 @@ fun main() {
             while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 leftSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(left)
-                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = true
+                if (!world.isInBounds(rayPosition)) travelingClockwise = true
             }
 
             left = nextStepDirection.toLeft()
@@ -158,7 +146,7 @@ fun main() {
             while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 leftSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(left)
-                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = true
+                if (!world.isInBounds(rayPosition)) travelingClockwise = true
             }
 
             lastStepDirection = nextStepDirection
@@ -174,21 +162,20 @@ fun main() {
 
             input.forEachIndexed { y, line ->
                 line.forEachIndexed { x, char ->
-                    val pos = Position(x, y)
-                    when {
-                        pos in loopPositions      -> print(char)
-                        pos in leftSidePositions  -> print("O")
-                        pos in rightSidePositions -> print("I")
-                        else                      -> print(".")
+                    when (Position(x, y)) {
+                        in loopPositions      -> print(char)
+                        in leftSidePositions  -> print("O")
+                        in rightSidePositions -> print("I")
+                        else                  -> print(".")
                     }
                 }
                 println()
             }
 
-            println("Outside is on the ${if (outsideIsToTheLeft!!) "left" else "right"}")
+            println("Outside is on the ${if (travelingClockwise!!) "left" else "right"}")
         }
 
-        return if (outsideIsToTheLeft!!) rightSidePositions.size else leftSidePositions.size
+        return if (travelingClockwise!!) rightSidePositions.size else leftSidePositions.size
     }
 
     solve(::part1, withInput = "day10/test", andAssert = 8)
