@@ -20,9 +20,14 @@ data class Position(val x: Int, val y: Int) {
 enum class Direction {
     NORTH, EAST, SOUTH, WEST;
 
-    fun toRight() = entries[(ordinal + 1).rem(entries.size)]
-    fun toLeft() = entries[(ordinal + 3).rem(entries.size)]
+    fun toRight() = rotate(1)
+    fun toLeft() = rotate(3)
+    fun toBack() = rotate(2)
+
+    private fun rotate(increments: Int) = entries[(ordinal + increments).rem(entries.size)]
 }
+
+data class Tile(val char: Char, val connections: Set<Direction>)
 
 val Char.connectsToEast get() = this in listOf('F', '-', 'L')
 val Char.connectsToSouth get() = this in listOf('F', '|', '7')
