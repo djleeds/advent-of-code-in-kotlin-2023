@@ -62,6 +62,10 @@ class World(val map: List<List<Tile>>) {
         else                                        -> throw IllegalStateException()
     }
 
+    private val nsBounds = map.indices
+    private val ewBounds = map[0].indices
+    fun isInBounds(position: Position): Boolean = position.y in nsBounds && position.x in ewBounds
+
     fun at(position: Position) = map[position.y][position.x]
 
     companion object {
@@ -83,7 +87,6 @@ fun main() {
 
         while (world.at(position) != Tile.START) {
             val currentTile = world.at(position)
-            println(currentTile)
             lastStepDirection = currentTile.nextDirection(lastStepDirection)
             position = position.go(lastStepDirection)
             steps++
@@ -95,8 +98,6 @@ fun main() {
     fun part2(input: List<String>): Int {
         val world = World.from(input)
 
-        val ewBounds = input[0].indices
-        val nsBounds = input.indices
 
         val loopPositions = mutableSetOf<Position>()
         val rightSidePositions = mutableSetOf<Position>()
@@ -152,38 +153,34 @@ fun main() {
             var rayPosition: Position
 
             rayPosition = position.go(right)
-            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
-                println("RIGHT RAY $rayPosition")
+            while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
-                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = false
+                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
             }
 
             right = nextStepDirection.toRight()
             rayPosition = position.go(right)
-            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
-                println("RIGHT RAY $rayPosition")
+            while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
-                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = false
+                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
             }
 
             var left = lastStepDirection.toLeft()
             rayPosition = position.go(left)
-            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
-                println("LEFT RAY $rayPosition")
+            while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 leftSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(left)
-                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = true
+                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = true
             }
 
             left = nextStepDirection.toLeft()
             rayPosition = position.go(left)
-            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
-                println("LEFT RAY $rayPosition")
+            while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
                 leftSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(left)
-                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = true
+                if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = true
             }
 
             lastStepDirection = nextStepDirection
