@@ -3,6 +3,8 @@ package day10
 import day10.Direction.*
 import solve
 
+val debug = false
+
 data class Position(val x: Int, val y: Int) {
     val east get() = copy(x = x + 1)
     val south get() = copy(y = y + 1)
@@ -112,7 +114,6 @@ fun main() {
 
         while (world.at(position) != Tile.START) {
             val currentTile = world.at(position)
-            println(currentTile)
             lastStepDirection = currentTile.nextDirection(lastStepDirection)
             position = position.go(lastStepDirection)
             loopPositions.add(position)
@@ -146,8 +147,6 @@ fun main() {
                 if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
             }
 
-            //
-
             var left = lastStepDirection.toLeft()
             rayPosition = position.go(left)
             while (rayPosition !in loopPositions && world.isInBounds(rayPosition)) {
@@ -168,28 +167,30 @@ fun main() {
             position = position.go(lastStepDirection)
         }
 
-        println("Left Positions = $leftSidePositions")
-        println("Right Positions = $rightSidePositions")
+        if (debug) {
+            println("Left Positions = $leftSidePositions")
+            println("Right Positions = $rightSidePositions")
 
-        println("Left Positions Count = ${leftSidePositions.size}")
-        println("Right Positions Count = ${rightSidePositions.size}")
+            println("Left Positions Count = ${leftSidePositions.size}")
+            println("Right Positions Count = ${rightSidePositions.size}")
 
-        input.forEachIndexed { y, line ->
-            line.forEachIndexed { x, char ->
-                val pos = Position(x, y)
-                when {
-                    pos in loopPositions      -> print(char)
-                    pos in leftSidePositions  -> print("O")
-                    pos in rightSidePositions -> print("I")
-                    else                      -> print(".")
+            input.forEachIndexed { y, line ->
+                line.forEachIndexed { x, char ->
+                    val pos = Position(x, y)
+                    when {
+                        pos in loopPositions      -> print(char)
+                        pos in leftSidePositions  -> print("O")
+                        pos in rightSidePositions -> print("I")
+                        else                      -> print(".")
+                    }
                 }
+                println()
             }
-            println()
+
+            println("Outside is on the ${if (outsideIsToTheLeft!!) "left" else "right"}")
         }
 
-        println("Outside is on the ${if (outsideIsToTheLeft!!) "left" else "right"}")
-
-        return if (outsideIsToTheLeft) rightSidePositions.size else leftSidePositions.size
+        return if (outsideIsToTheLeft!!) rightSidePositions.size else leftSidePositions.size
     }
 
     solve(::part1, withInput = "day10/test", andAssert = 8)
