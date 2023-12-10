@@ -145,39 +145,75 @@ fun main() {
 
         while (input.at(position) != 'S') {
             val currentTile = input.at(position)
-            val right = lastStepDirection.toRight()
+            val nextStepDirection = currentTile.nextDirection(lastStepDirection)
+
+            var right = lastStepDirection.toRight()
             var rayPosition = position.go(right)
 
-            println("is $rayPosition in loopPositions?")
+            if (position.x == 15 && position.y == 1) {
+                println("HERE")
+            }
 
-            while (rayPosition !in loopPositions) {
+            rayPosition = position.go(right)
+            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
                 println("RIGHT RAY $rayPosition")
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
             }
 
-            val left = lastStepDirection.toLeft()
-            rayPosition = position.go(left)
+            right = nextStepDirection.toRight()
+            rayPosition = position.go(right)
+            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
+                println("RIGHT RAY $rayPosition")
+                rightSidePositions.add(rayPosition)
+                rayPosition = rayPosition.go(right)
+            }
 
-            while (rayPosition !in loopPositions) {
+            var left = lastStepDirection.toLeft()
+            rayPosition = position.go(left)
+            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
                 println("LEFT RAY $rayPosition")
                 leftSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
             }
 
-            lastStepDirection = currentTile.nextDirection(lastStepDirection)
+            left = nextStepDirection.toLeft()
+            rayPosition = position.go(left)
+            while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
+                println("LEFT RAY $rayPosition")
+                leftSidePositions.add(rayPosition)
+                rayPosition = rayPosition.go(right)
+            }
+
+            lastStepDirection = nextStepDirection
             position = position.go(lastStepDirection)
         }
 
         println("Left Positions = $leftSidePositions")
         println("Right Positions = $rightSidePositions")
 
-        return -1
+        println("Left Positions Count = ${leftSidePositions.size}")
+        println("Right Positions Count = ${rightSidePositions.size}")
+
+        input.forEachIndexed { y, line ->
+            line.forEachIndexed { x, char ->
+                val pos = Position(x, y)
+                when {
+                    pos in loopPositions      -> print(char)
+                    pos in leftSidePositions  -> print("O")
+                    pos in rightSidePositions -> print("I")
+                    else                      -> print(".")
+                }
+            }
+            println()
+        }
+
+        return rightSidePositions.size
     }
 
-    //solve(::part1, withInput = "day10/test", andAssert = 8)
-    //solve(::part1, withInput = "day10/input", andAssert = 7107)
+    solve(::part1, withInput = "day10/test", andAssert = 8)
+    solve(::part1, withInput = "day10/input", andAssert = 7107)
 
-    solve(::part2, withInput = "day10/test2", andAssert = null)
-    //solve(::part2, withInput = "day10/input", andAssert = null)
+    solve(::part2, withInput = "day10/test2", andAssert = 10)
+    solve(::part2, withInput = "day10/input", andAssert = 281)
 }
