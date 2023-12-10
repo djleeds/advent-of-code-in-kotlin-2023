@@ -140,6 +140,8 @@ fun main() {
         println(loopPositions)
 
         // Traverse again, now that we have the loop charted, and fire rays off to the sides.
+        var outsideIsToTheLeft: Boolean? = null
+
         position = position.go(firstStepDirection)
         lastStepDirection = firstStepDirection
 
@@ -159,6 +161,7 @@ fun main() {
                 println("RIGHT RAY $rayPosition")
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
+                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = false
             }
 
             right = nextStepDirection.toRight()
@@ -167,6 +170,7 @@ fun main() {
                 println("RIGHT RAY $rayPosition")
                 rightSidePositions.add(rayPosition)
                 rayPosition = rayPosition.go(right)
+                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = false
             }
 
             var left = lastStepDirection.toLeft()
@@ -174,7 +178,8 @@ fun main() {
             while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
                 println("LEFT RAY $rayPosition")
                 leftSidePositions.add(rayPosition)
-                rayPosition = rayPosition.go(right)
+                rayPosition = rayPosition.go(left)
+                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = true
             }
 
             left = nextStepDirection.toLeft()
@@ -182,7 +187,8 @@ fun main() {
             while (rayPosition !in loopPositions && rayPosition.x in ewBounds && rayPosition.y in nsBounds) {
                 println("LEFT RAY $rayPosition")
                 leftSidePositions.add(rayPosition)
-                rayPosition = rayPosition.go(right)
+                rayPosition = rayPosition.go(left)
+                if (rayPosition.x !in ewBounds || rayPosition.y !in nsBounds) outsideIsToTheLeft = true
             }
 
             lastStepDirection = nextStepDirection
@@ -208,7 +214,9 @@ fun main() {
             println()
         }
 
-        return rightSidePositions.size
+        println("Outside is on the ${if (outsideIsToTheLeft!!) "left" else "right"}")
+
+        return if (outsideIsToTheLeft) rightSidePositions.size else leftSidePositions.size
     }
 
     solve(::part1, withInput = "day10/test", andAssert = 8)
