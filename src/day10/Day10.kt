@@ -98,33 +98,17 @@ fun main() {
     fun part2(input: List<String>): Int {
         val world = World.from(input)
 
-
         val loopPositions = mutableSetOf<Position>()
         val rightSidePositions = mutableSetOf<Position>()
         val leftSidePositions = mutableSetOf<Position>()
 
-        val y = input.indexOfFirst { it.contains('S') }
-        val x = input[y].indexOfFirst { it == 'S' }
-        val startPosition = Position(x, y)
-        var position = startPosition
+        var position = world.start
 
-        println("Start position = $position")
         loopPositions.add(position)
 
-        val firstStepDirection = when {
-            world.at(position.east).connections.contains(WEST)   -> EAST
-            world.at(position.south).connections.contains(NORTH) -> SOUTH
-            world.at(position.west).connections.contains(EAST)   -> WEST
-            world.at(position.north).connections.contains(SOUTH) -> NORTH
-            else                                                 -> throw IllegalStateException()
-        }
-
-        println("First step = $firstStepDirection")
-
-        position = position.go(firstStepDirection)
+        position = position.go(world.firstStepDirection)
         loopPositions.add(position)
-        var steps = 1
-        var lastStepDirection = firstStepDirection
+        var lastStepDirection = world.firstStepDirection
 
         while (world.at(position) != Tile.START) {
             val currentTile = world.at(position)
@@ -132,18 +116,13 @@ fun main() {
             lastStepDirection = currentTile.nextDirection(lastStepDirection)
             position = position.go(lastStepDirection)
             loopPositions.add(position)
-            steps++
         }
-
-        println(loopPositions.count() / 2)
-
-        println(loopPositions)
 
         // Traverse again, now that we have the loop charted, and fire rays off to the sides.
         var outsideIsToTheLeft: Boolean? = null
 
-        position = position.go(firstStepDirection)
-        lastStepDirection = firstStepDirection
+        position = position.go(world.firstStepDirection)
+        lastStepDirection = world.firstStepDirection
 
         while (world.at(position) != Tile.START) {
             val currentTile = world.at(position)
@@ -166,6 +145,8 @@ fun main() {
                 rayPosition = rayPosition.go(right)
                 if (!world.isInBounds(rayPosition)) outsideIsToTheLeft = false
             }
+
+            //
 
             var left = lastStepDirection.toLeft()
             rayPosition = position.go(left)
