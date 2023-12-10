@@ -70,6 +70,19 @@ class World(val map: List<List<Tile>>) {
 
     fun at(position: Position) = map[position.y][position.x]
 
+    fun traversePipeLoop(): Sequence<Pair<Position, Tile>> = sequence {
+        var position = start
+        var direction = firstStepDirection
+        var tile: Tile
+
+        do {
+            position = position.go(direction)
+            tile = at(position)
+            yield(position to tile)
+            if (tile != Tile.START) direction = tile.nextDirection(direction)
+        } while (tile != Tile.START)
+    }
+
     companion object {
         fun from(input: List<String>) =
             World(input.map { line -> line.map { char -> Tile.from(char) } })
@@ -79,22 +92,7 @@ class World(val map: List<List<Tile>>) {
 fun main() {
     fun part1(input: List<String>): Int {
         val world = World.from(input)
-
-        var position = world.start
-        val firstStepDirection = world.firstStepDirection
-
-        position = position.go(firstStepDirection)
-        var steps = 1
-        var lastStepDirection = firstStepDirection
-
-        while (world.at(position) != Tile.START) {
-            val currentTile = world.at(position)
-            lastStepDirection = currentTile.nextDirection(lastStepDirection)
-            position = position.go(lastStepDirection)
-            steps++
-        }
-
-        return steps / 2
+        return world.traversePipeLoop().count() / 2
     }
 
     fun part2(input: List<String>): Int {
